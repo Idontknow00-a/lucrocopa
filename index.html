@@ -428,10 +428,24 @@
         .profit-input.negative {
             color: var(--bad);
         }
+        
+        .clear-target-btn {
+background: transparent;
+border: none;
+color: var(--mut);
+cursor: pointer;
+font-size: 16px;
+font-weight: 700;
+line-height: 1;
+flex-shrink: 0;
+padding: 0;
+}
+
+.clear-target-btn:hover { color: #fff; }
 
         .remove-btn {
             position: absolute;
-            bottom: 4px;
+            bottom: 3.5px;
             right: 8px;
             width: 17px;
             height: 17px;
@@ -675,7 +689,7 @@
 
         .bet-card-actions {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 8px;
             flex-wrap: wrap;
         }
@@ -687,6 +701,7 @@
             margin-top: 16px;
             padding-top: 16px;
             border-top: 1px solid var(--line);
+            justify-content: center;
         }
 
         .tag {
@@ -707,15 +722,37 @@
             color: var(--accent)
         }
 
-        .winsel {
-            background: var(--surface2);
-            border: 1px solid var(--line);
-            color: var(--txt);
-            padding: 5px 7px;
-            border-radius: 6px;
-            font-size: 10px
-        }
+        .bet-card-actions > div {
+    width: 50%;
+    flex-shrink: 0;
+}
 
+.bet-card-actions .del-btn {
+    flex-shrink: 0;
+    align-self: center;
+    margin-top: 25px;
+    margin-left: auto;
+}
+
+.winsel {
+    background: var(--surface2);
+    border: 1px solid var(--line);
+    color: var(--txt);
+    padding: 5px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    width: 100%;
+    display: block;
+    margin-top: 4px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 600;
+}
         .empty {
             color: var(--mut);
             text-align: center;
@@ -728,7 +765,7 @@
             border: none;
             color: var(--mut);
             cursor: pointer;
-            font-size: 14px
+            font-size: 14px;
         }
 
         .del-btn:hover {
@@ -997,14 +1034,24 @@
         }
 
         function onProfitInput(id, value) {
-            if (isUpdatingProfit) return;
-            const c = cards.find(x => x.id === id);
-            if (!c) return;
-            const p = value === '' ? null : parseNum(value);
-            cards.forEach(x => { x.targetProfit = null; x.locked = false; });
-            c.targetProfit = p;
-            recalc();
-        }
+    if (isUpdatingProfit) return;
+    const c = cards.find(x => x.id === id);
+    if (!c) return;
+
+    const hasLocked = cards.some(x => x.locked && x.stake > 0 && x.odd > 0);
+    const p = value === '' ? null : parseNum(value);
+
+    if (hasLocked) {
+        // Só a linha TRAVADA aceita lucro-alvo. As demais apenas exibem o resultado.
+        if (!c.locked) { renderResults(); return; }
+        cards.forEach(x => { if (!x.locked) x.targetProfit = null; });
+        c.targetProfit = p;            // mantém c.locked = true → stake fixa
+    } else {
+        cards.forEach(x => { x.targetProfit = null; x.locked = false; });
+        c.targetProfit = p;
+    }
+    recalc();
+}
 
         function renderCards() {
             const grid = document.getElementById("calcGrid");
@@ -1087,13 +1134,15 @@
                     </div>
 
                     <div class="profit-input-wrap">
-                        <svg class="pencil" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                        <input type="number" class="profit-input" id="profit-${c.id}"
-                               value="${(c.result || 0).toFixed(2)}"
-                               step="0.01"
-                               inputmode="decimal"
-                               oninput="onProfitInput(${c.id}, this.value)">
-                    </div>
+    ${c.locked
+        ? `<button class="clear-target-btn" onclick="clearTargetProfit(${c.id})" title="Remover lucro-alvo da stake travada">×</button>`
+        : `<svg class="pencil" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`}
+    <input type="number" class="profit-input" id="profit-${c.id}"
+           value="${(c.result || 0).toFixed(2)}"
+           step="0.01"
+           inputmode="decimal"
+           oninput="onProfitInput(${c.id}, this.value)">
+</div>
 
                     ${idx >= 2 ? `<button class="remove-btn" onclick="removeCard(${c.id})" title="Remover linha">−</button>` : ''}
                 `;
@@ -1132,93 +1181,119 @@
             if (!value) return 0;
             return unit === 'pct' ? base * value / 100 : value;
         }
+        
+        function clearTargetProfit(id) {
+    const c = cards.find(x => x.id === id);
+    if (!c) return;
+    c.targetProfit = null;             // volta para a cobertura "equilibrada" (surebet)
+    recalc();
+}
 
         function computeBackArb() {
-            const valid = cards.filter(c => c.odd > 0);
-            const invSum = valid.reduce((s, c) => s + 1 / c.odd, 0);
-            const locked = cards.find(c => c.locked && c.odd > 0 && c.stake > 0);
-            const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
+    const valid    = cards.filter(c => c.odd > 0);
+    const invSum   = valid.reduce((s, c) => s + 1 / c.odd, 0);
+    const locked   = cards.find(c => c.locked && c.odd > 0 && c.stake > 0);
+    const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
 
-            let R;
-            if (targeted) {
-                R = (1 - invSum) !== 0 ? targeted.targetProfit / (1 - invSum) : 0;
-            } else if (locked) {
-                R = locked.stake * locked.odd;
-            } else {
-                const T = parseNum(document.getElementById("invest").value);
-                R = invSum > 0 ? T / invSum : 0;
-            }
-
-            valid.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
-            const totalStake = valid.reduce((s, c) => s + c.stake, 0);
-
-            const invEl = document.getElementById("invest");
-            if (document.activeElement !== invEl && (locked || targeted)) {
-                invEl.value = totalStake.toFixed(2);
-            }
-
-            cards.forEach(c => {
-                if (c.odd > 0 && c.stake > 0) {
-                    let win = c.stake * c.odd + adjAmount(c.aumento, c.unit, c.stake * (c.odd - 1));
-                    let profit = win - totalStake;
-                    profit -= adjAmount(c.comissao, c.unit, win);
-                    c.result = profit;
-                } else {
-                    c.result = 0;
-                }
-            });
-
-            const ret = valid.length ? Math.min(...valid.map(c => c.stake * c.odd)) : 0;
-            const profit = valid.length ? Math.min(...valid.map(c => c.result)) : 0;
-            _summary = { stake: totalStake, ret: ret, profit: profit, invSum: invSum, lay: false };
+    if (locked && locked.targetProfit != null) {
+        // stake travada fixa + lucro-alvo nela → distribui o resto como cobertura
+        const others = valid.filter(c => c.id !== locked.id);
+        const needed = locked.stake * (locked.odd - 1) - locked.targetProfit;
+        const denom  = others.reduce((s, c) => s + 1 / c.odd, 0);
+        others.forEach(c => { c.stake = denom > 0 ? needed * (1 / c.odd) / denom : 0; });
+    } else {
+        let R;
+        if (locked) {
+            R = locked.stake * locked.odd;
+        } else if (targeted) {
+            R = (1 - invSum) !== 0 ? targeted.targetProfit / (1 - invSum) : 0;
+        } else {
+            const T = parseNum(document.getElementById("invest").value);
+            R = invSum > 0 ? T / invSum : 0;
         }
+        valid.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+    }
+
+    const totalStake = valid.reduce((s, c) => s + c.stake, 0);
+
+    const invEl = document.getElementById("invest");
+    if (document.activeElement !== invEl && (locked || targeted)) {
+        invEl.value = totalStake.toFixed(2);
+    }
+
+    cards.forEach(c => {
+        if (c.odd > 0 && c.stake > 0) {
+            let win = c.stake * c.odd + adjAmount(c.aumento, c.unit, c.stake * (c.odd - 1));
+            let profit = win - totalStake;
+            profit -= adjAmount(c.comissao, c.unit, win);
+            c.result = profit;
+        } else {
+            c.result = 0;
+        }
+    });
+
+    const ret    = valid.length ? Math.min(...valid.map(c => c.stake * c.odd)) : 0;
+    const profit = valid.length ? Math.min(...valid.map(c => c.result)) : 0;
+    _summary = { stake: totalStake, ret, profit, invSum, lay: false };
+}
 
         function computeBackLay() {
     cards.forEach(c => c.result = 0);
     const backs = cards.filter(c => c.type === 'back' && c.odd > 0);
     const lays  = cards.filter(c => c.type === 'lay'  && c.odd > 0);
-
     if (backs.length === 0 || lays.length === 0) { _summary = null; return; }
 
     const lay  = lays[0];
     const comm = lay.unit === 'pct' ? (lay.comissao / 100) : 0;
 
+    const locked   = cards.find(c => c.locked && c.stake > 0 && c.odd > 0);
     const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
-    const locked   = cards.find(c => c.locked && c.stake > 0);
     const T        = parseNum(document.getElementById("invest").value);
 
-    if (targeted) {
-        const alvo   = targeted.targetProfit;
-        const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
-        const R = (1 - invSum) !== 0 ? alvo / (1 - invSum) : 0;
-        backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
-    } else if (locked) {
+    // 1) Stakes dos BACKS (a travada manda)
+    if (locked && locked.type === 'back') {
         const R = locked.stake * locked.odd;
+        backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+    } else if (targeted && !locked) {
+        const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
+        const R = (1 - invSum) !== 0 ? targeted.targetProfit / (1 - invSum) : 0;
         backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
     } else {
         const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
         backs.forEach(c => { c.stake = c.odd > 0 ? T * (1 / c.odd) / invSum : 0; });
     }
 
-    const maxBackReturn  = Math.max(...backs.map(c => c.stake * c.odd));
-    lay.stake = lay.odd > 1 ? maxBackReturn / (lay.odd - comm) : 0;
-
-    const liability     = lay.stake * (lay.odd - 1);
     const totalBackStake = backs.reduce((s, c) => s + c.stake, 0);
 
+    // 2) Stake do LAY (cobertura)
+    if (locked && locked.type === 'back' && locked.targetProfit != null) {
+        // calcula o lay para que o resultado do BACK travado seja EXATAMENTE o lucro-alvo
+        const b        = locked;
+        const aumento  = adjAmount(b.aumento,  b.unit, b.stake * (b.odd - 1));
+        const comissao = adjAmount(b.comissao, b.unit, b.stake * b.odd);
+        const liabilityNeeded =
+            b.stake * (b.odd - 1) - (totalBackStake - b.stake) + aumento - comissao - b.targetProfit;
+        lay.stake = lay.odd > 1 ? liabilityNeeded / (lay.odd - 1) : 0;
+        if (lay.stake < 0) lay.stake = 0;
+    } else {
+        const maxBackReturn = Math.max(...backs.map(c => c.stake * c.odd));
+        lay.stake = lay.odd > 1 ? maxBackReturn / (lay.odd - comm) : 0;
+    }
+
+    const liability = lay.stake * (lay.odd - 1);
+
+    // 3) Resultados
     backs.forEach(back => {
-        // ✅ lucro líquido do back quando ESSA seleção vence
         let profit = back.stake * (back.odd - 1) - liability - (totalBackStake - back.stake);
         profit += adjAmount(back.aumento,  back.unit, back.stake * (back.odd - 1));
         profit -= adjAmount(back.comissao, back.unit, back.stake * back.odd);
         back.result = profit;
     });
-
     lay.result = lay.stake * (1 - comm) - totalBackStake;
 
-    const totalStake  = totalBackStake + liability;
-    const allResults  = [...backs.map(c => c.result), lay.result];
-    const profit      = Math.min(...allResults);
+    const totalStake = totalBackStake + liability;
+    const allResults = [...backs.map(c => c.result), lay.result];
+    const profit     = Math.min(...allResults);
     _summary = { stake: totalStake, ret: totalStake + profit, profit, invSum: null, lay: true };
 }
 
@@ -1267,16 +1342,6 @@
             if (_summary.lay) {
                 const ok = _summary.profit >= 0;
                 const roi = _summary.stake ? _summary.profit / _summary.stake * 100 : 0;
-                al.className = "alert " + (ok ? "ok" : "no");
-                al.textContent = ok
-                    ? `✅ Lucro garantido de ${fmt(_summary.profit)} (ROI ${pct(roi)}) independente do resultado.`
-                    : `⚠️ Resultado negativo de ${fmt(_summary.profit)} (ROI ${pct(roi)}).`;
-            } else {
-                const isArb = _summary.invSum < 1;
-                al.className = "alert " + (isArb ? "ok" : "no");
-                al.textContent = isArb
-                    ? `✅ Surebet! Lucro garantido de ${pct((1 / _summary.invSum - 1) * 100)} independente do resultado.`
-                    : `⚠️ Não é surebet — soma das probabilidades é ${pct(_summary.invSum * 100)} (acima de 100%).`;
             }
         }
 
@@ -1430,46 +1495,41 @@
                 const card = document.createElement("div");
                 card.className = "bet-card";
                 card.innerHTML = `
-                    <div class="bet-card-header">
-                        <div class="bet-card-event">${b.evento}</div>
-                        <div class="bet-card-date">${formatDate(b.dataCriacao)}</div>
-                    </div>
-                    <div class="bet-card-outcomes">
-                        ${b.outcomes.map((o, i) => `
-                            <div class="bet-outcome ${b.vencedora === i ? 'winner' : ''}">
-                                <span class="bet-outcome-casa">${o.casa} ${o.type === 'lay' ? '(Lay)' : ''}</span>
-                                <span class="bet-outcome-odd">@${o.odd}</span>
-                                <span class="bet-outcome-stake">${fmt(o.stake)}</span>
-                                ${b.vencedora === i ? '🏆' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="bet-card-stats">
-                        <div class="bet-stat">
-                            <span class="bet-stat-label">Investido</span>
-                            <span class="bet-stat-value">${fmt(b.invest)}</span>
-                        </div>
-                        <div class="bet-stat">
-    <span class="bet-stat-label">Lucro</span>
-
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span class="bet-stat-value ${lucro >= 0 ? 'pos' : 'neg'}">
-            ${fmt(lucro)}
-        </span>
-
-        <button class="del-btn" onclick="delBet(${b.id})" title="Excluir">
-            🗑️
-        </button>
+    <div class="bet-card-header">
+        <div class="bet-card-event">${b.evento}</div>
+        <div class="bet-card-date">${formatDate(b.dataCriacao)}</div>
     </div>
+    <div class="bet-card-outcomes">
+        ${b.outcomes.map((o, i) => `
+            <div class="bet-outcome ${b.vencedora === i ? 'winner' : ''}">
+                <span class="bet-outcome-casa">${o.casa} ${o.type === 'lay' ? '(Lay)' : ''}</span>
+                <span class="bet-outcome-odd">@${o.odd}</span>
+                <span class="bet-outcome-stake">${fmt(o.stake)}</span>
+                ${b.vencedora === i ? '🏆' : ''}
+            </div>
+        `).join('')}
+    </div>
+    <div class="bet-card-stats">
+        <div class="bet-stat">
+            <span class="bet-stat-label">Investido</span>
+            <span class="bet-stat-value">${fmt(b.invest)}</span>
+        </div>
+        <div class="bet-stat">
+            <span class="bet-stat-label">Lucro</span>
+            <span class="bet-stat-value ${lucro >= 0 ? 'pos' : 'neg'}">${fmt(lucro)}</span>
+        </div>
+    </div>
+    <div class="bet-card-actions">
+    <div>
+        <span class="tag ${b.status === 'encerrada' ? 'done' : 'pend'}">${b.status === 'encerrada' ? 'Encerrada' : 'Pendente'}</span>
+        <select class="winsel" onchange="setWinner(${b.id}, this.value)">
+            <option value="">— não encerrado —</option>
+            ${b.outcomes.map((o, i) => `<option value="${i}" ${b.vencedora === i ? 'selected' : ''}>${o.casa}</option>`).join('')}
+        </select>
+    </div>
+    <button class="del-btn" onclick="delBet(${b.id})" title="Excluir">🗑️</button>
 </div>
-                    <div class="bet-card-actions">
-                        <span class="tag ${b.status === 'encerrada' ? 'done' : 'pend'}">${b.status === 'encerrada' ? 'Encerrada' : 'Pendente'}</span>
-                        <select class="winsel" onchange="setWinner(${b.id}, this.value)">
-                            <option value="">— não encerrado —</option>
-                            ${b.outcomes.map((o, i) => `<option value="${i}" ${b.vencedora === i ? 'selected' : ''}>${o.casa}</option>`).join('')}
-                        </select>
-                    </div>
-                `;
+`;
                 container.appendChild(card);
             });
 
