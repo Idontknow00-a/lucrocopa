@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Surebets • Calculadora & Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0c0f;
+            --surface: #11151b;
+            --surface2: #161b22;
+            --line: #222b35;
+            --txt: #e9eef3;
+            --mut: #7d8a99;
+            --accent: #22c55e;
+            --accent-d: #16a34a;
+            --yellow: #f5c842;
+            --blue: #3b82f6;
+            --warn: #f59e0b;
+            --bad: #ef4444;
+            --r: 12px;
+        }
+
+        html.light {
+            --bg: #f3f5f8;
+            --surface: #ffffff;
+            --surface2: #f6f8fa;
+            --line: #e3e8ee;
+            --txt: #0f1620;
+            --mut: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", system-ui, sans-serif
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--txt);
+            padding: 20px 14px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: .2s
+        }
+
+        .wrap {
+            max-width: 1080px;
+            width: 100%;
+            margin: 0 auto
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px
+        }
+
+        h1 {
+            font-size: 21px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 9px
+        }
+
+        .badge {
+    background: rgba(34, 197, 94, .4);
+    color: var(--accent);
+    border: 1px solid rgba(34, 197, 94, .3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+        .sub {
+            color: var(--mut);
+            font-size: 13px;
+            margin-bottom: 20px
+        }
+
+        .theme-btn {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--r);
+            padding: 13px 14px;
+            min-width: 0
+        }
+
+        .card .lbl {
+            color: var(--mut);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            font-weight: 600
+        }
+
+        .card .val {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px
+        }
+
+        .pos { color: var(--accent) }
+        .neg { color: var(--bad) }
+        .neu { color: var(--blue) }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 20px
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px
+        }
+
+        .panel-head h2 {
+            font-size: 15px;
+            font-weight: 600
+        }
+
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 0
+        }
+
+        .field label {
+            font-size: 11px;
+            color: var(--mut);
+            font-weight: 500
+        }
+
+        input, select {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            outline: none;
+            transition: .15s;
+            font-weight: 500;
+            width: 100%;
+            min-width: 0
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent)
+        }
+
+        input::placeholder {
+            color: var(--mut)
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .calc-grid > * {
+            min-width: 0
+        }
+
+        .calc-card {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 10px 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            min-width: 0;
+        }
+
+        .casa-input-wrap {
+            position: relative;
+            min-width: 0
+        }
+
+        .casa-input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            padding: 8px 28px 8px 9px;
+            border-radius: 8px;
+            font-size: 11px;
+            outline: none;
+        }
+
+        .casa-input:focus {
+            border-color: var(--yellow)
+        }
+
+        .casa-input::placeholder {
+            color: var(--mut)
+        }
+
+        .link-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--mut);
+            cursor: pointer;
+        }
+
+        .link-icon:hover {
+            color: var(--yellow)
+        }
+
+        .fields-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .field-sm {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0
+        }
+
+        .field-sm label {
+            font-size: 8px;
+            font-weight: 500;
+            color: var(--mut);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .field-sm input {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            padding: 6px 8px;
+            border-radius: 7px;
+            font-size: 12px;
+            outline: none;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .field-sm input:focus {
+            border-color: var(--yellow)
+        }
+
+        .type-btn {
+            width: 100%;
+            padding: 7px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--mut);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        .type-btn.active {
+            background: var(--yellow);
+            color: #000;
+            border-color: var(--yellow);
+        }
+
+        .three-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+        }
+
+        .three-fields .field-sm label {
+            font-size: 8px
+        }
+
+        .three-fields input {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            padding: 6px 7px;
+            border-radius: 6px;
+            font-size: 11px;
+            outline: none;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .three-fields input:focus {
+            border-color: var(--yellow)
+        }
+
+        .unit-toggle {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .unit-btn {
+            width: 28px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1.5px solid var(--line);
+            background: var(--surface);
+            color: var(--mut);
+            font-size: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .unit-btn.active {
+            border-color: var(--yellow);
+            color: var(--yellow);
+            background: transparent;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .action-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            color: var(--mut);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .15s;
+        }
+
+        .action-icon:hover {
+            background: var(--surface);
+            color: var(--txt)
+        }
+
+        .action-icon.active {
+            color: var(--yellow)
+        }
+
+        .profit-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            transition: .15s;
+        }
+
+        .profit-input-wrap:focus-within {
+            border-color: var(--yellow)
+        }
+
+        .profit-input-wrap .pencil {
+            color: var(--mut);
+            flex-shrink: 0;
+        }
+
+        .profit-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            text-align: right;
+            outline: none;
+            width: 100%;
+            min-width: 0;
+            padding: 0;
+        }
+
+        .profit-input.negative {
+            color: var(--bad);
+        }
+
+        .remove-btn {
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid var(--bad);
+            color: var(--bad);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            transition: .15s;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .remove-btn:hover {
+            background: var(--bad);
+            color: #fff
+        }
+
+        .add-line-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: var(--r);
+            border: 1px dashed rgba(245, 200, 66, 0.5);
+            background: transparent;
+            color: var(--yellow);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: .15s;
+            margin-bottom: 12px;
+        }
+
+        .add-line-btn:hover {
+            background: rgba(245, 200, 66, 0.08)
+        }
+
+        .alert {
+            padding: 9px 12px;
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: none
+        }
+
+        .alert.ok {
+            display: block;
+            background: rgba(34, 197, 94, .12);
+            color: var(--accent);
+            border: 1px solid rgba(34, 197, 94, .3)
+        }
+
+        .alert.no {
+            display: block;
+            background: rgba(239, 68, 68, .12);
+            color: var(--bad);
+            border: 1px solid rgba(239, 68, 68, .3)
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0
+        }
+
+        .sbox {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px
+        }
+
+        .sbox span {
+            display: block;
+            font-size: 9px;
+            color: var(--mut);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            font-weight: 600
+        }
+
+        .sbox b {
+            font-size: 18px;
+            font-weight: 700;
+            display: block;
+            margin-top: 2px
+        }
+
+        button.act {
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: .15s
+        }
+
+        .btn-accent {
+    background: rgba(34, 197, 94, .15);
+    color: var(--accent);
+    border: 1px solid rgba(34, 197, 94, .3);
+}
+
+        .btn-accent:hover {
+            background: var(--accent-d)
+        }
+
+        .btn-ghost {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            color: var(--txt)
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--accent)
+        }
+
+        .row-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+        /* Bet cards layout */
+        .bet-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .bet-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--r);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bet-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .bet-card-event {
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bet-card-date {
+            font-size: 10px;
+            color: var(--mut);
+            white-space: nowrap;
+        }
+
+        .bet-card-outcomes {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bet-outcome {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: var(--surface2);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .bet-outcome.winner {
+            border: 1px solid var(--accent);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .bet-outcome-casa {
+            flex: 1;
+            font-weight: 500;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bet-outcome-odd {
+            color: var(--mut);
+            font-size: 11px;
+        }
+
+        .bet-outcome-stake {
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .bet-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .bet-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .bet-stat-label {
+            font-size: 9px;
+            color: var(--mut);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .bet-stat-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .bet-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .backup-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 600
+        }
+
+        .tag.pend {
+            background: rgba(245, 158, 11, .15);
+            color: var(--warn)
+        }
+
+        .tag.done {
+            background: rgba(34, 197, 94, .15);
+            color: var(--accent)
+        }
+
+        .winsel {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            padding: 5px 7px;
+            border-radius: 6px;
+            font-size: 10px
+        }
+
+        .empty {
+            color: var(--mut);
+            text-align: center;
+            padding: 28px;
+            font-size: 12px
+        }
+
+        .del-btn {
+            background: transparent;
+            border: none;
+            color: var(--mut);
+            cursor: pointer;
+            font-size: 14px
+        }
+
+        .del-btn:hover {
+            color: var(--bad)
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border: 1px solid var(--line);
+            color: var(--txt);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            max-width: 90%;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.ok {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .toast.no {
+            border-color: var(--bad);
+            color: var(--bad);
+        }
+
+        @media(max-width:720px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        @media(max-width:480px) {
+            .calc-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px
+            }
+            .calc-card {
+                padding: 8px 8px 24px;
+                gap: 6px
+            }
+            .bet-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div>
+                <h1>🎯 Copa <span class="badge">2026</span></h1>
+            </div>
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn"></button>
+        </header>
+        <div class="sub">Calculadora + registro de apostas. Tudo salvo no seu navegador.</div>
+
+        <div class="cards">
+            <div class="card">
+                <div class="lbl">Total Investido</div>
+                <div class="val neu" id="t-inv">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <div class="lbl">Lucro Encerrado</div>
+                <div class="val pos" id="t-real">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <div class="lbl">Lucro Pendente</div>
+                <div class="val" id="t-pend">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <div class="lbl">Lucro Final</div>
+                <div class="val pos" id="t-final">R$ 0,00</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="top-row">
+                <div class="field">
+                    <label>Evento / Jogo</label>
+                    <input type="text" id="evento" placeholder="Ex: Flamengo x Palmeiras">
+                </div>
+                <div class="field">
+                    <label>Investimento total (R$)</label>
+                    <input type="number" id="invest" value="100" step="0.01" oninput="onInvestInput()">
+                </div>
+            </div>
+
+            <div class="calc-grid" id="calcGrid"></div>
+
+            <button class="add-line-btn" onclick="addCard()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                Adicionar linha de aposta
+            </button>
+
+            <div class="alert" id="alert"></div>
+
+            <div class="row-actions">
+                <button class="act btn-ghost" onclick="resetForm()">Limpar</button>       
+                <button class="act btn-accent" onclick="saveBet()"> Salvar </button>
+            <div class="summary">
+                <div class="sbox"><span>Total apostado</span><b id="s-stake">R$ 0,00</b></div>
+                <div class="sbox"><span>Retorno garantido</span><b id="s-ret">R$ 0,00</b></div>
+                <div class="sbox"><span>Lucro</span><b id="s-profit" class="pos">R$ 0,00</b></div>
+                <div class="sbox"><span>ROI</span><b id="s-roi" class="pos">0,00%</b></div>
+            </div>
+
+            
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head"><h2>Minhas Surebets</h2></div>
+            <div class="bet-cards" id="betCards"></div>
+            <div class="empty" id="empty">Nenhuma surebet salva ainda.</div>
+
+            <div class="backup-actions">
+                <button class="act btn-ghost" onclick="exportBets()">📤 Exportar (.json)</button>
+                <button class="act btn-ghost" style="position:relative; overflow:hidden;">📥
+    Importar (.json)
+    <input type="file" accept=".json" onchange="importBets(event)"
+           style="position:absolute; inset:0; opacity:0; cursor:pointer;">
+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const fmt = n => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const pct = n => (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+        const parseNum = v => {
+            if (!v) return 0;
+            return parseFloat(v.toString().replace(',', '.')) || 0;
+        };
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        let toastTimeout;
+        function toast(msg, type='info') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + type;
+            setTimeout(() => t.classList.add('show'), 10);
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        let cards = [];
+        let cardIdCounter = 0;
+        let _summary = null;
+        let isUpdatingProfit = false;
+        let bets = JSON.parse(localStorage.getItem("surebets_v2") || "[]");
+
+        function applyTheme() {
+            const light = localStorage.getItem("sb_theme") === "light";
+            document.documentElement.classList.toggle("light", light);
+            document.getElementById("themeBtn").textContent = light ? "☀️" : "🌙";
+        }
+
+        function toggleTheme() {
+            const light = localStorage.getItem("sb_theme") === "light";
+            localStorage.setItem("sb_theme", light ? "dark" : "light");
+            applyTheme();
+        }
+
+        function addCard(casa = "", odd = "", type = "back") {
+            cardIdCounter++;
+            cards.push({
+                id: cardIdCounter,
+                casa,
+                odd: parseNum(odd),
+                stake: 0,
+                locked: cards.length === 0,
+                type,
+                comissao: 0,
+                cashback: 0,
+                aumento: 0,
+                unit: 'pct',
+                targetProfit: null,
+                result: 0
+            });
+            renderCards();
+            recalc();
+        }
+
+        function removeCard(id) {
+            if (cards.length <= 2) {
+                toast("Mantenha pelo menos 2 linhas.", "no");
+                return;
+            }
+            cards = cards.filter(c => c.id !== id);
+            renderCards();
+            recalc();
+        }
+
+        function toggleLock(id) {
+            cards.forEach(c => {
+                if (c.id === id) c.locked = !c.locked;
+                else c.locked = false;
+                c.targetProfit = null;
+            });
+            renderCards();
+            recalc();
+        }
+
+        function toggleType(id) {
+    const c = cards.find(x => x.id === id);
+    if (!c) return;
+
+    c.type = c.type === 'back' ? 'lay' : 'back';
+
+    cards.forEach(card => {
+        card.targetProfit = null;
+    });
+
+    renderCards();
+    recalc();
+}
+
+        function setUnit(id, unit) {
+            const c = cards.find(x => x.id === id);
+            if (c) c.unit = unit;
+            renderCards();
+            recalc();
+        }
+
+        function updCard(id, k, v) {
+            const c = cards.find(x => x.id === id);
+            if (!c) return;
+            if (k === 'odd') c.odd = parseNum(v);
+            else if (k === 'stake') {
+                c.stake = parseNum(v);
+                c.locked = true;
+                c.targetProfit = null;
+                cards.forEach(x => { if (x.id !== id) x.locked = false; });
+            } else if (k === 'comissao') c.comissao = parseNum(v);
+            else if (k === 'cashback') c.cashback = parseNum(v);
+            else if (k === 'aumento') c.aumento = parseNum(v);
+            else c[k] = v;
+            recalc();
+        }
+
+        function onProfitInput(id, value) {
+            if (isUpdatingProfit) return;
+            const c = cards.find(x => x.id === id);
+            if (!c) return;
+            const p = value === '' ? null : parseNum(value);
+            cards.forEach(x => { x.targetProfit = null; x.locked = false; });
+            c.targetProfit = p;
+            recalc();
+        }
+
+        function renderCards() {
+            const grid = document.getElementById("calcGrid");
+            grid.innerHTML = "";
+            cards.forEach((c, idx) => {
+                const div = document.createElement("div");
+                div.className = "calc-card";
+                div.id = "card-" + c.id;
+
+                const labelValor = c.type === 'back' ? 'Valor' : 'A Favor';
+                const showResp = c.type === 'lay';
+                const responsab = c.type === 'lay' && c.stake > 0 && c.odd > 0 ? (c.stake * (c.odd - 1)).toFixed(2) : '';
+                const unitLabel = c.unit === 'pct' ? '%' : 'R$';
+
+                div.innerHTML = `
+                    <div class="casa-input-wrap">
+                        <input type="text" class="casa-input" value="${c.casa}" placeholder="Ex: Bet365" oninput="updCard(${c.id},'casa',this.value)">
+                        <span class="link-icon">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        </span>
+                    </div>
+
+                    <div class="fields-row">
+                        <div class="field-sm">
+                            <label>${labelValor}</label>
+                            <input type="number" id="stake-${c.id}" step="0.01" inputmode="decimal" value="${c.stake ? c.stake.toFixed(2) : ''}" placeholder="" oninput="updCard(${c.id},'stake',this.value)">
+                        </div>
+                        <div class="field-sm">
+                            <label>ODD</label>
+                            <input type="number" id="odd-${c.id}" step="0.001" inputmode="decimal" value="${c.odd || ''}" placeholder="" oninput="updCard(${c.id},'odd',this.value)">
+                        </div>
+                    </div>
+
+                    ${showResp ? `
+<div class="fields-row">
+    <div class="field-sm">
+        <label>Responsab.</label>
+        <input type="number" step="0.01" value="${responsab}" readonly style="opacity:0.7">
+    </div>
+    <div class="field-sm" style="justify-content:flex-end">
+        <button class="type-btn ${c.type === 'lay' ? 'active' : ''}" onclick="toggleType(${c.id})">${c.type === 'back' ? 'Back' : 'Lay'}</button>
+    </div>
+</div>
+` : `
+<div class="fields-row">
+    <div></div>
+    <div class="field-sm" style="justify-content:flex-end">
+        <button class="type-btn ${c.type === 'lay' ? 'active' : ''}" onclick="toggleType(${c.id})">${c.type === 'back' ? 'Back' : 'Lay'}</button>
+    </div>
+</div>
+`}
+
+                    <div class="three-fields">
+                        <div class="field-sm">
+                            <input type="number" step="0.01" inputmode="decimal" value="${c.comissao || ''}" placeholder="Comissão ${unitLabel}" oninput="updCard(${c.id},'comissao',this.value)">
+                        </div>
+                        <div class="field-sm">
+                            <input type="number" step="0.01" inputmode="decimal" value="${c.cashback || ''}" placeholder="Cashback ${unitLabel}" oninput="updCard(${c.id},'cashback',this.value)">
+                        </div>
+                        <div class="field-sm">
+                            <input type="number" step="0.01" inputmode="decimal" value="${c.aumento || ''}" placeholder="Aumento ${unitLabel}" oninput="updCard(${c.id},'aumento',this.value)">
+                        </div>
+                    </div>
+
+                    <div class="unit-toggle">
+                        <button class="unit-btn ${c.unit==='rs'?'active':''}" onclick="setUnit(${c.id},'rs')">R$</button>
+                        <button class="unit-btn ${c.unit==='pct'?'active':''}" onclick="setUnit(${c.id},'pct')">%</button>
+                    </div>
+
+                    <div class="action-icons">
+                        <button class="action-icon ${c.locked?'active':''}" onclick="toggleLock(${c.id})" title="Definir como aposta principal">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </button>
+                        <button class="action-icon" title="Bônus">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>
+                        </button>
+                        <button class="action-icon" title="Dividir">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="profit-input-wrap">
+                        <svg class="pencil" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                        <input type="number" class="profit-input" id="profit-${c.id}"
+                               value="${(c.result || 0).toFixed(2)}"
+                               step="0.01"
+                               inputmode="decimal"
+                               oninput="onProfitInput(${c.id}, this.value)">
+                    </div>
+
+                    ${idx >= 2 ? `<button class="remove-btn" onclick="removeCard(${c.id})" title="Remover linha">−</button>` : ''}
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function updateStakeInputs() {
+            cards.forEach(c => {
+                const inp = document.getElementById("stake-" + c.id);
+                if (inp && document.activeElement !== inp) {
+                    inp.value = c.stake ? c.stake.toFixed(2) : '';
+                }
+            });
+        }
+
+        function updateResponsab() {
+            cards.forEach(c => {
+                if (c.type === 'lay') {
+                    const cardEl = document.getElementById("card-" + c.id);
+                    if (cardEl) {
+                        const respInput = cardEl.querySelector('input[readonly]');
+                        if (respInput && document.activeElement !== respInput)
+                            respInput.value = (c.stake > 0 && c.odd > 0) ? (c.stake * (c.odd - 1)).toFixed(2) : '';
+                    }
+                }
+            });
+        }
+
+        function onInvestInput() {
+            cards.forEach(c => { c.locked = false; c.targetProfit = null; });
+            recalc();
+        }
+
+        function adjAmount(value, unit, base) {
+            if (!value) return 0;
+            return unit === 'pct' ? base * value / 100 : value;
+        }
+
+        function computeBackArb() {
+            const valid = cards.filter(c => c.odd > 0);
+            const invSum = valid.reduce((s, c) => s + 1 / c.odd, 0);
+            const locked = cards.find(c => c.locked && c.odd > 0 && c.stake > 0);
+            const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
+
+            let R;
+            if (targeted) {
+                R = (1 - invSum) !== 0 ? targeted.targetProfit / (1 - invSum) : 0;
+            } else if (locked) {
+                R = locked.stake * locked.odd;
+            } else {
+                const T = parseNum(document.getElementById("invest").value);
+                R = invSum > 0 ? T / invSum : 0;
+            }
+
+            valid.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+            const totalStake = valid.reduce((s, c) => s + c.stake, 0);
+
+            const invEl = document.getElementById("invest");
+            if (document.activeElement !== invEl && (locked || targeted)) {
+                invEl.value = totalStake.toFixed(2);
+            }
+
+            cards.forEach(c => {
+                if (c.odd > 0 && c.stake > 0) {
+                    let win = c.stake * c.odd + adjAmount(c.aumento, c.unit, c.stake * (c.odd - 1));
+                    let profit = win - totalStake;
+                    profit -= adjAmount(c.comissao, c.unit, win);
+                    c.result = profit;
+                } else {
+                    c.result = 0;
+                }
+            });
+
+            const ret = valid.length ? Math.min(...valid.map(c => c.stake * c.odd)) : 0;
+            const profit = valid.length ? Math.min(...valid.map(c => c.result)) : 0;
+            _summary = { stake: totalStake, ret: ret, profit: profit, invSum: invSum, lay: false };
+        }
+
+        function computeBackLay() {
+    cards.forEach(c => c.result = 0);
+    const backs = cards.filter(c => c.type === 'back' && c.odd > 0);
+    const lays  = cards.filter(c => c.type === 'lay'  && c.odd > 0);
+
+    if (backs.length === 0 || lays.length === 0) { _summary = null; return; }
+
+    const lay  = lays[0];
+    const comm = lay.unit === 'pct' ? (lay.comissao / 100) : 0;
+
+    const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
+    const locked   = cards.find(c => c.locked && c.stake > 0);
+    const T        = parseNum(document.getElementById("invest").value);
+
+    if (targeted) {
+        const alvo   = targeted.targetProfit;
+        const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
+        const R = (1 - invSum) !== 0 ? alvo / (1 - invSum) : 0;
+        backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+    } else if (locked) {
+        const R = locked.stake * locked.odd;
+        backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+    } else {
+        const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
+        backs.forEach(c => { c.stake = c.odd > 0 ? T * (1 / c.odd) / invSum : 0; });
+    }
+
+    const maxBackReturn  = Math.max(...backs.map(c => c.stake * c.odd));
+    lay.stake = lay.odd > 1 ? maxBackReturn / (lay.odd - comm) : 0;
+
+    const liability     = lay.stake * (lay.odd - 1);
+    const totalBackStake = backs.reduce((s, c) => s + c.stake, 0);
+
+    backs.forEach(back => {
+        // ✅ lucro líquido do back quando ESSA seleção vence
+        let profit = back.stake * (back.odd - 1) - liability - (totalBackStake - back.stake);
+        profit += adjAmount(back.aumento,  back.unit, back.stake * (back.odd - 1));
+        profit -= adjAmount(back.comissao, back.unit, back.stake * back.odd);
+        back.result = profit;
+    });
+
+    lay.result = lay.stake * (1 - comm) - totalBackStake;
+
+    const totalStake  = totalBackStake + liability;
+    const allResults  = [...backs.map(c => c.result), lay.result];
+    const profit      = Math.min(...allResults);
+    _summary = { stake: totalStake, ret: totalStake + profit, profit, invSum: null, lay: true };
+}
+
+        function recalc() {
+            const valid = cards.filter(c => c.odd > 0);
+            if (valid.length < 2) {
+                _summary = null;
+                cards.forEach(c => c.result = 0);
+                renderResults();
+                updateResponsab();
+                setSummary(0, 0, 0);
+                document.getElementById("alert").className = "alert";
+                return;
+            }
+
+            if (cards.some(c => c.type === 'lay')) computeBackLay();
+            else computeBackArb();
+
+            renderResults();
+            updateStakeInputs();
+            updateResponsab();
+            updateSummary();
+        }
+
+        function renderResults() {
+            isUpdatingProfit = true;
+            cards.forEach(c => {
+                const el = document.getElementById("profit-" + c.id);
+                if (!el) return;
+                if (document.activeElement !== el) {
+                    el.value = (c.result || 0).toFixed(2);
+                }
+                el.className = 'profit-input' + ((c.result || 0) < 0 ? ' negative' : '');
+            });
+            isUpdatingProfit = false;
+        }
+
+        function updateSummary() {
+            if (!_summary) {
+                setSummary(0, 0, 0);
+                document.getElementById("alert").className = "alert";
+                return;
+            }
+            setSummary(_summary.stake, _summary.ret, _summary.profit);
+            const al = document.getElementById("alert");
+            if (_summary.lay) {
+                const ok = _summary.profit >= 0;
+                const roi = _summary.stake ? _summary.profit / _summary.stake * 100 : 0;
+                al.className = "alert " + (ok ? "ok" : "no");
+                al.textContent = ok
+                    ? `✅ Lucro garantido de ${fmt(_summary.profit)} (ROI ${pct(roi)}) independente do resultado.`
+                    : `⚠️ Resultado negativo de ${fmt(_summary.profit)} (ROI ${pct(roi)}).`;
+            } else {
+                const isArb = _summary.invSum < 1;
+                al.className = "alert " + (isArb ? "ok" : "no");
+                al.textContent = isArb
+                    ? `✅ Surebet! Lucro garantido de ${pct((1 / _summary.invSum - 1) * 100)} independente do resultado.`
+                    : `⚠️ Não é surebet — soma das probabilidades é ${pct(_summary.invSum * 100)} (acima de 100%).`;
+            }
+        }
+
+        function setSummary(stake, ret, profit) {
+            document.getElementById("s-stake").textContent = fmt(stake);
+            document.getElementById("s-ret").textContent = fmt(ret);
+            const p = document.getElementById("s-profit"),
+                r = document.getElementById("s-roi");
+            p.textContent = fmt(profit);
+            p.className = profit >= 0 ? "pos" : "neg";
+            r.textContent = pct(stake ? profit / stake * 100 : 0);
+            r.className = profit >= 0 ? "pos" : "neg";
+        }
+
+        function saveBet() {
+            const evento = document.getElementById("evento").value.trim();
+            if (!evento) {
+                toast("Preencha o nome do evento/jogo.", "no");
+                return;
+            }
+
+            const valid = cards.filter(c => c.odd > 0 && c.stake > 0);
+            if (valid.length < 2) {
+                toast("Adicione ao menos 2 casas com odd e stake.", "no");
+                return;
+            }
+
+            const totalStake = _summary ? _summary.stake : valid.reduce((s, c) => s + c.stake, 0);
+            const lucroEsperado = _summary ? _summary.profit : 0;
+
+            const bet = {
+                id: Date.now(),
+                evento: evento,
+                outcomes: valid.map(c => ({
+                    casa: c.casa || "?",
+                    odd: c.odd,
+                    stake: c.stake,
+                    type: c.type
+                })),
+                invest: totalStake,
+                lucroEsperado: lucroEsperado,
+                status: "pendente",
+                vencedora: null,
+                dataCriacao: new Date().toISOString()
+            };
+
+            bets.unshift(bet);
+
+            try {
+                localStorage.setItem("surebets_v2", JSON.stringify(bets));
+                toast("✅ Surebet salva com sucesso!", "ok");
+                resetForm();
+                render();
+            } catch (e) {
+                toast("❌ Erro ao salvar: " + e.message, "no");
+            }
+        }
+
+        function resetForm() {
+            document.getElementById("evento").value = "";
+            document.getElementById("invest").value = 100;
+            cards = [];
+            cardIdCounter = 0;
+            addCard("", "", "back");
+            addCard("", "", "back");
+        }
+
+        function setWinner(id, idx) {
+            const b = bets.find(x => x.id === id);
+            if (!b) return;
+            b.vencedora = idx === "" ? null : parseInt(idx);
+            if (b.vencedora !== null) {
+                b.status = "encerrada";
+                const w = b.outcomes[b.vencedora];
+                b.lucroReal = b.lucroEsperado;
+            } else {
+                b.status = "pendente";
+                b.lucroReal = undefined;
+            }
+            persist();
+            render();
+        }
+
+        function delBet(id) {
+            bets = bets.filter(b => b.id !== id);
+            persist();
+            render();
+            toast("Surebet excluída.", "ok");
+        }
+
+        function persist() {
+            try {
+                localStorage.setItem("surebets_v2", JSON.stringify(bets));
+            } catch (e) {
+                console.error("Erro ao salvar:", e);
+            }
+        }
+
+        function exportBets() {
+            if (bets.length === 0) {
+                toast("Nenhuma surebet para exportar.", "no");
+                return;
+            }
+            const data = JSON.stringify(bets, null, 2);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'surebets_backup_' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            toast("✅ Backup exportado com sucesso!", "ok");
+        }
+
+        function importBets(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (Array.isArray(data)) {
+                        bets = data;
+                        persist();
+                        render();
+                        toast("✅ Backup importado com sucesso! " + data.length + " surebet(s).", "ok");
+                    } else {
+                        toast("❌ Formato inválido.", "no");
+                    }
+                } catch (err) {
+                    toast("❌ Erro ao importar: " + err.message, "no");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        function render() {
+            const container = document.getElementById("betCards");
+            const empty = document.getElementById("empty");
+            container.innerHTML = "";
+            empty.style.display = bets.length ? "none" : "block";
+            let totInv = 0, totReal = 0, totPend = 0;
+
+            bets.forEach(b => {
+                totInv += b.invest;
+                const lucro = b.status === "encerrada" ? (b.lucroReal || 0) : b.lucroEsperado;
+                if (b.status === "encerrada") totReal += (b.lucroReal || 0);
+                else totPend += b.lucroEsperado;
+
+                const card = document.createElement("div");
+                card.className = "bet-card";
+                card.innerHTML = `
+                    <div class="bet-card-header">
+                        <div class="bet-card-event">${b.evento}</div>
+                        <div class="bet-card-date">${formatDate(b.dataCriacao)}</div>
+                    </div>
+                    <div class="bet-card-outcomes">
+                        ${b.outcomes.map((o, i) => `
+                            <div class="bet-outcome ${b.vencedora === i ? 'winner' : ''}">
+                                <span class="bet-outcome-casa">${o.casa} ${o.type === 'lay' ? '(Lay)' : ''}</span>
+                                <span class="bet-outcome-odd">@${o.odd}</span>
+                                <span class="bet-outcome-stake">${fmt(o.stake)}</span>
+                                ${b.vencedora === i ? '🏆' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="bet-card-stats">
+                        <div class="bet-stat">
+                            <span class="bet-stat-label">Investido</span>
+                            <span class="bet-stat-value">${fmt(b.invest)}</span>
+                        </div>
+                        <div class="bet-stat">
+    <span class="bet-stat-label">Lucro</span>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="bet-stat-value ${lucro >= 0 ? 'pos' : 'neg'}">
+            ${fmt(lucro)}
+        </span>
+
+        <button class="del-btn" onclick="delBet(${b.id})" title="Excluir">
+            🗑️
+        </button>
+    </div>
+</div>
+                    <div class="bet-card-actions">
+                        <span class="tag ${b.status === 'encerrada' ? 'done' : 'pend'}">${b.status === 'encerrada' ? 'Encerrada' : 'Pendente'}</span>
+                        <select class="winsel" onchange="setWinner(${b.id}, this.value)">
+                            <option value="">— não encerrado —</option>
+                            ${b.outcomes.map((o, i) => `<option value="${i}" ${b.vencedora === i ? 'selected' : ''}>${o.casa}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById("t-inv").textContent = fmt(totInv);
+            const real = document.getElementById("t-real");
+            real.textContent = fmt(totReal);
+            real.className = "val " + (totReal >= 0 ? "pos" : "neg");
+
+            const pend = document.getElementById("t-pend");
+            pend.textContent = fmt(totPend);
+            pend.className = "val " + (totPend >= 0 ? "pos" : "neg");
+
+            const fin = document.getElementById("t-final");
+            fin.textContent = fmt(totReal + totPend);
+            fin.className = "val " + ((totReal + totPend) >= 0 ? "pos" : "neg");
+        }
+
+        applyTheme();
+        resetForm();
+        render();
+    </script>
+</body>
+</html>
+
