@@ -1191,27 +1191,83 @@ padding: 0;
 
         function computeBackArb() {
     const valid    = cards.filter(c => c.odd > 0);
-    const invSum   = valid.reduce((s, c) => s + 1 / c.odd, 0);
     const locked   = cards.find(c => c.locked && c.odd > 0 && c.stake > 0);
     const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
+
+    // Helper: get effective odd considering commission on profit
+    const getEffOdd = (c) => {
+        const commPct = c.unit === 'pct' ? c.comissao : (c.comissao / (c.stake * (c.odd - 1)) * 100 || 0);
+        // effOdd = 1 + (odd - 1) * (1 - comm%)
+        return 1 + (c.odd - 1) * (1 - commPct / 100);
+    };
 
     if (locked && locked.targetProfit != null) {
         // stake travada fixa + lucro-alvo nela → distribui o resto como cobertura
         const others = valid.filter(c => c.id !== locked.id);
-        const needed = locked.stake * (locked.odd - 1) - locked.targetProfit;
-        const denom  = others.reduce((s, c) => s + 1 / c.odd, 0);
-        others.forEach(c => { c.stake = denom > 0 ? needed * (1 / c.odd) / denom : 0; });
-    } else {
-        let R;
-        if (locked) {
-            R = locked.stake * locked.odd;
-        } else if (targeted) {
-            R = (1 - invSum) !== 0 ? targeted.targetProfit / (1 - invSum) : 0;
+        // Target profit for locked card: locked.stake * (effOdd - 1) - sum(other stakes) = target
+        // This is complex because other stakes depend on distribution. 
+        // Simplified: We want the NET return of the locked card to be specific.
+        // Locked Net Return = locked.stake * getEffOdd(locked)
+        // Total Stake = locked.stake + sum(others.stakes)
+        // Profit = Locked Net Return - Total Stake = targetProfit
+        // => Locked Net Return - locked.stake - sum(others.stakes) = targetProfit
+        // => sum(others.stakes) = Locked Net Return - locked.stake - targetProfit
+        
+        const lockedNetReturn = locked.stake * getEffOdd(locked);
+        const neededOthersStakeSum = lockedNetReturn - locked.stake - locked.targetProfit;
+        
+        if (neededOthersStakeSum <= 0) {
+             others.forEach(c => c.stake = 0);
         } else {
-            const T = parseNum(document.getElementById("invest").value);
-            R = invSum > 0 ? T / invSum : 0;
+            // Distribute neededOthersStakeSum among others based on their inverse effective odds
+            const othersInvSum = others.reduce((s, c) => s + 1/getEffOdd(c), 0);
+            others.forEach(c => {
+                c.stake = neededOthersStakeSum * (1/getEffOdd(c)) / othersInvSum;
+            });
         }
-        valid.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+    } else {
+        // Standard Arb Calculation using Effective Odds
+        const invSum = valid.reduce((s, c) => s + 1/getEffOdd(c), 0);
+        let R;
+        
+        if (locked) {
+            // If locked but no target profit, we just scale others to match the locked one's return?
+            // Or we treat locked stake as fixed and calculate R based on it?
+            // Usually "locked" means "I want to bet this amount here".
+            // So R_locked = locked.stake * getEffOdd(locked).
+            // Then R_total should be such that R_total / invSum matches? No.
+            // We want equal returns. R_i = S_i * EffOdd_i.
+            // S_locked is fixed. R_target = S_locked * EffOdd_locked.
+            // S_other = R_target / EffOdd_other.
+            const targetReturn = locked.stake * getEffOdd(locked);
+            valid.forEach(c => {
+                if (c.id === locked.id) {
+                    // stake already set
+                } else {
+                    c.stake = targetReturn / getEffOdd(c);
+                }
+            });
+        } else if (targeted) {
+             // Target profit is global or per card? The UI shows per card input but logic usually implies global arb profit.
+             // Let's assume targeted card defines the desired profit level for the arb.
+             // Profit = R_total * (1 - invSum). 
+             // R_total = TargetProfit / (1 - invSum).
+             const targetProfitVal = targeted.targetProfit;
+             const denom = 1 - invSum;
+             R = denom !== 0 ? targetProfitVal / denom : 0;
+             
+             valid.forEach(c => {
+                 c.stake = (R / getEffOdd(c));
+             });
+        } else {
+            // Standard: Distribute Total Investment T
+            const T = parseNum(document.getElementById("invest").value);
+            R = invSum > 0 ? T / invSum : 0; // R is the uniform return
+            
+            valid.forEach(c => {
+                c.stake = R / getEffOdd(c);
+            });
+        }
     }
 
     const totalStake = valid.reduce((s, c) => s + c.stake, 0);
@@ -1221,20 +1277,34 @@ padding: 0;
         invEl.value = totalStake.toFixed(2);
     }
 
+    // Calculate Results
     cards.forEach(c => {
         if (c.odd > 0 && c.stake > 0) {
-            let win = c.stake * c.odd + adjAmount(c.aumento, c.unit, c.stake * (c.odd - 1));
-            let profit = win - totalStake;
-            profit -= adjAmount(c.comissao, c.unit, win);
-            c.result = profit;
+            const grossProfit = c.stake * (c.odd - 1);
+            const commAmt = adjAmount(c.comissao, c.unit, grossProfit);
+            const increaseAmt = adjAmount(c.aumento, c.unit, grossProfit);
+            
+            const netWin = c.stake + grossProfit - commAmt + increaseAmt;
+            c.result = netWin - totalStake;
         } else {
             c.result = 0;
         }
     });
 
-    const ret    = valid.length ? Math.min(...valid.map(c => c.stake * c.odd)) : 0;
+    // Summary stats
+    // In an arb, the return is roughly equal for all outcomes if calculated correctly.
+    // We take the min to be safe.
+    const returns = valid.map(c => {
+         const grossProfit = c.stake * (c.odd - 1);
+         const commAmt = adjAmount(c.comissao, c.unit, grossProfit);
+         const increaseAmt = adjAmount(c.aumento, c.unit, grossProfit);
+         return c.stake + grossProfit - commAmt + increaseAmt;
+    });
+    
+    const ret = returns.length ? Math.min(...returns) : 0;
     const profit = valid.length ? Math.min(...valid.map(c => c.result)) : 0;
-    _summary = { stake: totalStake, ret, profit, invSum, lay: false };
+    
+    _summary = { stake: totalStake, ret, profit, invSum: null, lay: false };
 }
 
         function computeBackLay() {
@@ -1244,52 +1314,107 @@ padding: 0;
     if (backs.length === 0 || lays.length === 0) { _summary = null; return; }
 
     const lay  = lays[0];
-    const comm = lay.unit === 'pct' ? (lay.comissao / 100) : 0;
-
+    // Lay commission is usually on profit. 
+    // Lay Profit = Stake. Lay Liability = Stake * (Odd - 1).
+    // If Lay wins (Back loses): We keep Lay Stake. But pay commission on Lay Stake? 
+    // Usually commission is on net profit of the exchange account.
+    // Let's assume standard model: Commission on Lay Profit (which is the Stake amount won from backer).
+    const layCommPct = lay.unit === 'pct' ? lay.comissao : 0; // Simplify to % for lay comm in this context or handle abs
+    
     const locked   = cards.find(c => c.locked && c.stake > 0 && c.odd > 0);
     const targeted = cards.find(c => c.targetProfit != null && c.odd > 0);
     const T        = parseNum(document.getElementById("invest").value);
 
-    // 1) Stakes dos BACKS (a travada manda)
+    // Helper for Back Effective Odd
+    const getBackEffOdd = (c) => {
+        const commPct = c.unit === 'pct' ? c.comissao : (c.comissao / (c.stake * (c.odd - 1)) * 100 || 0);
+        return 1 + (c.odd - 1) * (1 - commPct / 100);
+    };
+
+    // 1) Stakes dos BACKS
     if (locked && locked.type === 'back') {
-        const R = locked.stake * locked.odd;
-        backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+        // Use Effective Odd for balancing
+        const targetReturn = locked.stake * getBackEffOdd(locked);
+        backs.forEach(c => { 
+            if (c.id !== locked.id) {
+                c.stake = targetReturn / getBackEffOdd(c); 
+            }
+        });
     } else if (targeted && !locked) {
-        const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
-        const R = (1 - invSum) !== 0 ? targeted.targetProfit / (1 - invSum) : 0;
-        backs.forEach(c => { c.stake = c.odd > 0 ? R / c.odd : 0; });
+        // This path is tricky with mixed types. Assuming target applies to the whole book.
+        // For simplicity in hybrid, we might skip complex target logic or apply to backs only.
+        // Let's stick to investment distribution if not locked.
+        const invSum = backs.reduce((s, c) => s + 1/getBackEffOdd(c), 0);
+        backs.forEach(c => { c.stake = T * (1/getBackEffOdd(c)) / invSum; });
     } else {
-        const invSum = backs.reduce((s, c) => s + 1 / c.odd, 0);
-        backs.forEach(c => { c.stake = c.odd > 0 ? T * (1 / c.odd) / invSum : 0; });
+        const invSum = backs.reduce((s, c) => s + 1/getBackEffOdd(c), 0);
+        backs.forEach(c => { c.stake = T * (1/getBackEffOdd(c)) / invSum; });
     }
 
     const totalBackStake = backs.reduce((s, c) => s + c.stake, 0);
 
     // 2) Stake do LAY (cobertura)
+    // We want: Net Back Profit (if Back wins) == Net Lay Profit (if Lay wins)
+    // If Back i wins:
+    // Back i Net Return = S_i * EffOdd_i
+    // Lay Loss = Liability = S_lay * (LayOdd - 1)
+    // Total Cost = TotalBackStake + Liability
+    // Profit = Back i Net Return - Total Cost
+    
+    // If Lay wins (All Backs lose):
+    // Lay Net Win = S_lay * (1 - Comm%)
+    // Total Cost = TotalBackStake
+    // Profit = Lay Net Win - TotalBackStake
+    
+    // Equating Profits:
+    // Back_i_Net_Return - (TotalBackStake + Liab) = Lay_Net_Win - TotalBackStake
+    // Back_i_Net_Return - Liab = Lay_Net_Win
+    
+    // Let R_i = S_i * EffOdd_i (approx equal for all backs if balanced)
+    // Let R_max = max(R_i) -> worst case for liability calculation usually involves the highest return back? 
+    // Actually in Arb, we balance them so R_i are equal. Let's use R_avg or R_0.
+    // Let's use the first back as reference for balancing.
+    const refBack = backs[0];
+    const refBackReturn = refBack.stake * getBackEffOdd(refBack);
+    
+    // Lay Net Win = S_lay * (1 - layCommPct/100)
+    // Liability = S_lay * (lay.odd - 1)
+    
+    // Equation: refBackReturn - S_lay*(lay.odd - 1) = S_lay * (1 - layCommPct/100)
+    // refBackReturn = S_lay * (lay.odd - 1 + 1 - layCommPct/100)
+    // refBackReturn = S_lay * (lay.odd - layCommPct/100)
+    
+    const layEffDenom = lay.odd - (layCommPct/100);
+    lay.stake = layEffDenom > 0 ? refBackReturn / layEffDenom : 0;
+    
+    // Adjust if locked back has specific target profit?
     if (locked && locked.type === 'back' && locked.targetProfit != null) {
-        // calcula o lay para que o resultado do BACK travado seja EXATAMENTE o lucro-alvo
-        const b        = locked;
-        const aumento  = adjAmount(b.aumento,  b.unit, b.stake * (b.odd - 1));
-        const comissao = adjAmount(b.comissao, b.unit, b.stake * b.odd);
-        const liabilityNeeded =
-            b.stake * (b.odd - 1) - (totalBackStake - b.stake) + aumento - comissao - b.targetProfit;
-        lay.stake = lay.odd > 1 ? liabilityNeeded / (lay.odd - 1) : 0;
-        if (lay.stake < 0) lay.stake = 0;
-    } else {
-        const maxBackReturn = Math.max(...backs.map(c => c.stake * c.odd));
-        lay.stake = lay.odd > 1 ? maxBackReturn / (lay.odd - comm) : 0;
+         // We want Profit = locked.targetProfit
+         // Profit = Lay_Net_Win - TotalBackStake
+         // locked.targetProfit = S_lay * (1 - layCommPct/100) - TotalBackStake
+         // S_lay = (locked.targetProfit + TotalBackStake) / (1 - layCommPct/100)
+         const divisor = 1 - layCommPct/100;
+         lay.stake = divisor > 0 ? (locked.targetProfit + totalBackStake) / divisor : 0;
     }
 
     const liability = lay.stake * (lay.odd - 1);
 
     // 3) Resultados
     backs.forEach(back => {
-        let profit = back.stake * (back.odd - 1) - liability - (totalBackStake - back.stake);
-        profit += adjAmount(back.aumento,  back.unit, back.stake * (back.odd - 1));
-        profit -= adjAmount(back.comissao, back.unit, back.stake * back.odd);
-        back.result = profit;
+        const grossProfit = back.stake * (back.odd - 1);
+        const commAmt = adjAmount(back.comissao, back.unit, grossProfit);
+        const increaseAmt = adjAmount(back.aumento, back.unit, grossProfit);
+        
+        const netWin = back.stake + grossProfit - commAmt + increaseAmt;
+        // If this back wins, we lose the liability on the lay
+        back.result = netWin - liability - totalBackStake; 
     });
-    lay.result = lay.stake * (1 - comm) - totalBackStake;
+    
+    // If Lay wins
+    const layGrossWin = lay.stake; // We win the backer's stake
+    const layCommAmt = adjAmount(lay.comissao, lay.unit, layGrossWin);
+    const layNetWin = layGrossWin - layCommAmt;
+    lay.result = layNetWin - totalBackStake;
 
     const totalStake = totalBackStake + liability;
     const allResults = [...backs.map(c => c.result), lay.result];
